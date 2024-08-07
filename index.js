@@ -4,6 +4,10 @@ import bodyParser from "body-parser";
 const app = express();
 const port = 4000;
 
+const date = new Date();
+const postDate = date.toISOString();
+
+
 // In-memory data store
 let posts = [
   {
@@ -41,14 +45,81 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //Write your code here//
 
 //CHALLENGE 1: GET All posts
+app.get("/posts", (req, res) =>{
+  res.json(posts);
+});
 
 //CHALLENGE 2: GET a specific post by id
+app.get("/posts/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const foundPost = posts.find((post) => post.id === id);
+  res.json(foundPost);
+});
 
 //CHALLENGE 3: POST a new post
+app.post("/posts", (req, res) =>{
+  // Create variable to store new post content
+  const id = posts.length + 1;
+  const title = req.body.title;
+  const content = req.body.content;
+  const author = req.body.author;
+  const date = postDate;
+  //Create a new post object with new content.
+  //The values being the varibales previously created.
+  const newPost = {
+    id: id, 
+    title: title, 
+    content: content, 
+    author: author, 
+    date:date
+  };
+  // Add the new post object to the posts array.
+  posts.push(newPost);
+  //Send new post as JSON data
+  res.json(newPost);
+});
 
 //CHALLENGE 4: PATCH a post when you just want to update one parameter
+app.patch("/posts/:id", (req, res) =>{
+  const id = parseInt(req.params.id);
+  // First we find the post to be edited
+  const existingPost = posts.find((post) => post.id === id);
+  //Now create a replacement post object to store changes
+  const replacementPost = {
+    id: id,
+    title: req.body.title || existingPost.title,
+    content: req.body.content || existingPost.content,
+    author: req.body.author || existingPost.author,
+    date: postDate || existingPost.date
+  };
+  // Find the index of the post we want to edit
+  const searchIndex = posts.findIndex((post) => post.id === id);
+  //Assign the post we just edited to the posts array
+  posts[searchIndex] = replacementPost;
+  console.log(posts[searchIndex]);
+  //Send new/updated post as json data
+  res.json(replacementPost);
+
+});
 
 //CHALLENGE 5: DELETE a specific post by providing the post id.
+app.delete("/posts/:id", (req, res) => {
+  // Get the ID of post the user wnats to delete from path parameters
+  const id = parseInt(req.params.id);
+  //Find its index from the posts array
+  const searchIndex = posts.findIndex((post) => post.id === id);
+
+  if (searchIndex > -1) {
+    //Remove item at searchIndex position
+    posts.splice(searchIndex, 1);
+    res.sendStatus(200);
+  } else {
+    res
+      .status(404)
+      .json({ error: `Joke with id: ${id} not found. No jokes were deleted.` });
+  }
+
+});
 
 app.listen(port, () => {
   console.log(`API is running at http://localhost:${port}`);
